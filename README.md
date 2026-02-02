@@ -7,6 +7,7 @@ A comprehensive honeypot that mimics the [OpenClaw](https://github.com/openclaw/
 **This tool is for authorized security research only.**
 
 - Only deploy on networks and systems you own or have explicit permission to test
+- This should go without saying, but ensure your firewall blocks WAN access to 5555
 - All traffic is logged for analysis - handle captured data responsibly
 - Do not use for malicious purposes
 - Follow responsible disclosure practices for any vulnerabilities discovered
