@@ -1,0 +1,37 @@
+# OpenClaw Honeypot Docker Compose
+# For security research purposes only
+
+version: '3.8'
+
+services:
+  honeypot:
+    build: .
+    container_name: openclaw-honeypot
+    ports:
+      - "18789:18789"
+    environment:
+      - NODE_ENV=production
+      - PORT=18789
+      - BIND_ADDRESS=0.0.0.0
+      - DATABASE_URL=file:/app/data/honeypot.db
+      - LOG_LEVEL=info
+      - LOG_TO_FILE=true
+      - LOG_PATH=/app/logs
+      - FAKE_VERSION=2026.2.1
+      - FAKE_GATEWAY_TOKEN=honeypot-token-change-me
+    volumes:
+      - honeypot_data:/app/data
+      - honeypot_logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:18789/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  honeypot_data:
+    driver: local
+  honeypot_logs:
+    driver: local

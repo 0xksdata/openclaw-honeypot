@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenClaw Control</title>
+  <meta name="description" content="OpenClaw Personal AI Assistant Control Panel">
+  <meta name="color-scheme" content="dark light">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/styles/openclaw.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-brand">
+        <span class="logo">🦞</span>
+        <h1>OpenClaw</h1>
+        <span class="tagline">EXFOLIATE!</span>
+      </div>
+      <div class="header-status">
+        <span id="connection-status" class="status-badge disconnected">
+          <span class="status-dot"></span>
+          <span class="status-text">Disconnected</span>
+        </span>
+      </div>
+    </header>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="modal">
+      <div class="modal-content">
+        <div class="auth-header">
+          <span class="auth-logo">🦞</span>
+          <h2>Connect to Gateway</h2>
+          <p class="auth-subtitle">Enter your credentials to access OpenClaw</p>
+        </div>
+        <form id="auth-form">
+          <div class="form-group">
+            <label for="auth-mode">Authentication Mode</label>
+            <select id="auth-mode" name="mode">
+              <option value="token">Token</option>
+              <option value="password">Password</option>
+            </select>
+          </div>
+          <div class="form-group" id="token-group">
+            <label for="auth-token">Gateway Token</label>
+            <input type="password" id="auth-token" name="token" placeholder="Enter your gateway token">
+          </div>
+          <div class="form-group hidden" id="password-group">
+            <label for="auth-password">Password</label>
+            <input type="password" id="auth-password" name="password" placeholder="Enter your password">
+          </div>
+          <button type="submit" class="btn btn-primary">
+            <span>Connect</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </form>
+        <div class="auth-footer">
+          <p>Gateway v<span id="gateway-version">2026.2.1</span></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <main id="main-content" class="main-content hidden">
+      <!-- Sidebar -->
+      <nav class="sidebar">
+        <ul class="nav-list">
+          <li class="nav-item active" data-view="overview">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Overview</span>
+          </li>
+          <li class="nav-item" data-view="chat">
+            <span class="nav-icon">💬</span>
+            <span class="nav-label">Chat</span>
+          </li>
+          <li class="nav-item" data-view="sessions">
+            <span class="nav-icon">📁</span>
+            <span class="nav-label">Sessions</span>
+          </li>
+          <li class="nav-item" data-view="channels">
+            <span class="nav-icon">📡</span>
+            <span class="nav-label">Channels</span>
+          </li>
+          <li class="nav-item" data-view="agents">
+            <span class="nav-icon">🤖</span>
+            <span class="nav-label">Agents</span>
+          </li>
+          <li class="nav-item" data-view="config">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-label">Config</span>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Content Area -->
+      <div class="content">
+        <!-- Overview View -->
+        <div id="view-overview" class="view active">
+          <h2>Gateway Overview</h2>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon">🌐</div>
+              <div class="stat-info">
+                <span class="stat-value" id="stat-connections">0</span>
+                <span class="stat-label">Active Connections</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">📨</div>
+              <div class="stat-info">
+                <span class="stat-value" id="stat-messages">0</span>
+                <span class="stat-label">Messages Today</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">📡</div>
+              <div class="stat-info">
+                <span class="stat-value" id="stat-channels">0/6</span>
+                <span class="stat-label">Channels Online</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">⏱️</div>
+              <div class="stat-info">
+                <span class="stat-value" id="stat-uptime">0s</span>
+                <span class="stat-label">Uptime</span>
+              </div>
+            </div>
+          </div>
+
+          <h3>Channel Status</h3>
+          <div class="channel-list" id="channel-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Chat View -->
+        <div id="view-chat" class="view hidden">
+          <div class="chat-container">
+            <div class="chat-header">
+              <h2>WebChat</h2>
+              <select id="chat-session" class="session-select">
+                <option value="main">main</option>
+              </select>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+              <div class="message assistant">
+                <div class="message-avatar">🦞</div>
+                <div class="message-content">
+                  <p>Hello! I'm OpenClaw, your personal AI assistant. How can I help you today?</p>
+                </div>
+              </div>
+            </div>
+            <form class="chat-input" id="chat-form">
+              <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off">
+              <button type="submit" class="btn btn-primary">
+                Send
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Sessions View -->
+        <div id="view-sessions" class="view hidden">
+          <h2>Sessions</h2>
+          <div class="sessions-list" id="sessions-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Channels View -->
+        <div id="view-channels" class="view hidden">
+          <h2>Channels</h2>
+          <div class="channels-grid" id="channels-grid">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Agents View -->
+        <div id="view-agents" class="view hidden">
+          <h2>Agents</h2>
+          <div class="agents-list" id="agents-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Config View -->
+        <div id="view-config" class="view hidden">
+          <h2>Configuration</h2>
+          <div class="config-editor">
+            <pre id="config-content">Loading...</pre>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

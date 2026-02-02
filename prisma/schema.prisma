@@ -1,0 +1,198 @@
+// OpenClaw Honeypot Database Schema
+// For security research - logs all interactions
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Tracks individual connections (HTTP or WebSocket)
+model Connection {
+  id            String    @id @default(uuid())
+  ipAddress     String
+  userAgent     String?
+  fingerprint   String?   // Client fingerprint if available
+  country       String?   // GeoIP country
+  city          String?   // GeoIP city
+  asn           String?   // Autonomous System Number
+  connectionType String   // "http" or "websocket"
+  connectedAt   DateTime  @default(now())
+  disconnectedAt DateTime?
+
+  // Relations
+  requests      Request[]
+  wsMessages    WebSocketMessage[]
+  authAttempts  AuthAttempt[]
+
+  @@index([ipAddress])
+  @@index([connectedAt])
+}
+
+// HTTP Requests
+model Request {
+  id           String     @id @default(uuid())
+  connectionId String
+  connection   Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  method       String     // GET, POST, etc.
+  path         String     // URL path
+  queryString  String?    // Query parameters
+  headers      String     // JSON string of headers
+  body         String?    // Request body
+  bodySize     Int        @default(0)
+
+  responseCode Int?       // HTTP response code
+  responseBody String?    // Response we sent
+
+  // Analysis
+  isSuspicious Boolean    @default(false)
+  suspiciousReasons String? // JSON array of reasons
+
+  timestamp    DateTime   @default(now())
+  processingMs Int?       // How long we took to respond
+
+  @@index([path])
+  @@index([timestamp])
+  @@index([isSuspicious])
+}
+
+// WebSocket Messages
+model WebSocketMessage {
+  id           String     @id @default(uuid())
+  connectionId String
+  connection   Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  direction    String     // "inbound" or "outbound"
+  frameType    String     // "req", "res", "event", "connect", "hello-ok"
+  method       String?    // For request frames
+  requestId    String?    // Message ID for req/res correlation
+
+  payload      String     // JSON payload
+  raw          String     // Raw message as received
+  payloadSize  Int        @default(0)
+
+  // Analysis
+  isSuspicious Boolean    @default(false)
+  suspiciousReasons String?
+
+  timestamp    DateTime   @default(now())
+
+  @@index([connectionId])
+  @@index([frameType])
+  @@index([method])
+  @@index([timestamp])
+}
+
+// Authentication Attempts
+model AuthAttempt {
+  id           String     @id @default(uuid())
+  connectionId String
+  connection   Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  ipAddress    String
+  method       String     // "token", "password", "device", "tailscale"
+  credential   String     // The credential they tried (hashed for passwords)
+  credentialRaw String?   // Raw credential for research (be careful!)
+
+  success      Boolean    // Did we "accept" it (honeypot always might accept)
+  failureReason String?
+
+  // Client info
+  clientId     String?
+  clientVersion String?
+  platform     String?
+
+  timestamp    DateTime   @default(now())
+
+  @@index([ipAddress])
+  @@index([method])
+  @@index([timestamp])
+}
+
+// Channel Webhook Interactions
+model ChannelInteraction {
+  id           String   @id @default(uuid())
+
+  channel      String   // "whatsapp", "telegram", "discord", "slack", "signal", etc.
+  endpoint     String   // The webhook path
+  httpMethod   String   // Usually POST
+
+  headers      String   // JSON headers
+  payload      String   // JSON payload
+  payloadSize  Int      @default(0)
+
+  // Extracted data
+  senderId     String?  // Extracted sender ID
+  messageText  String?  // Extracted message text
+
+  ipAddress    String
+
+  // Analysis
+  isSuspicious Boolean  @default(false)
+  suspiciousReasons String?
+
+  // Response
+  responseCode Int?
+  responseBody String?
+
+  timestamp    DateTime @default(now())
+
+  @@index([channel])
+  @@index([ipAddress])
+  @@index([timestamp])
+}
+
+// Suspicious Activity Log
+model SuspiciousActivity {
+  id           String   @id @default(uuid())
+
+  type         String   // "sql_injection", "command_injection", "xss", "path_traversal", "prompt_injection", "bruteforce", "scan", "exploit"
+  severity     String   // "low", "medium", "high", "critical"
+
+  description  String   // Human-readable description
+  payload      String?  // The suspicious payload
+  pattern      String?  // Regex/pattern that matched
+
+  ipAddress    String
+  userAgent    String?
+
+  // Context
+  requestPath  String?
+  requestMethod String?
+  connectionId String?
+
+  timestamp    DateTime @default(now())
+
+  @@index([type])
+  @@index([severity])
+  @@index([ipAddress])
+  @@index([timestamp])
+}
+
+// Session for tracking attacker sessions
+model AttackerSession {
+  id           String   @id @default(uuid())
+
+  ipAddress    String
+  firstSeen    DateTime @default(now())
+  lastSeen     DateTime @default(now())
+
+  requestCount Int      @default(0)
+  wsMessageCount Int    @default(0)
+  authAttemptCount Int  @default(0)
+  suspiciousCount Int   @default(0)
+
+  // Behavior flags
+  isScanner    Boolean  @default(false)
+  isBruteforcer Boolean @default(false)
+  isExploiter  Boolean  @default(false)
+
+  notes        String?  // Manual notes
+
+  @@unique([ipAddress])
+  @@index([lastSeen])
+}
