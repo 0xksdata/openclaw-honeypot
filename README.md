@@ -27,7 +27,7 @@ A comprehensive honeypot that mimics the [OpenClaw](https://github.com/openclaw/
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/openclaw-honeypot.git
+git clone https://github.com/0xksdata/openclaw-honeypot.git
 cd openclaw-honeypot
 
 # Start with Docker Compose
