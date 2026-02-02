@@ -1,4 +1,4 @@
-# OpenClaw Honeypot
+# OpenClaw (ClawdBot/MoltBot) Honeypot
 
 A comprehensive honeypot that mimics the [OpenClaw](https://github.com/openclaw/openclaw) personal AI assistant infrastructure for security research purposes.
 
